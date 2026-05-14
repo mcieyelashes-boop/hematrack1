@@ -5,10 +5,28 @@ class TimelineScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mockData = [
+      {'week': 'Baseline', 'status': 'Awal'},
+      {'week': 'Minggu 1', 'status': 'Stabil'},
+      {'week': 'Minggu 2', 'status': 'Mengecil'},
+      {'week': 'Minggu 3', 'status': 'Mengecil'},
+    ];
+
     return Scaffold(
       appBar: AppBar(title: const Text('Timeline Monitoring')),
-      body: const Center(
-        child: Text('Timeline follow-up photo akan tampil di sini.'),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: mockData.length,
+        itemBuilder: (context, index) {
+          final item = mockData[index];
+          return Card(
+            child: ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: Text(item['week']!),
+              subtitle: Text('Status: ${item['status']}'),
+            ),
+          );
+        },
       ),
     );
   }
