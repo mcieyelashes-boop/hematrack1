@@ -12,4 +12,22 @@ class FollowUpPhoto {
     required this.date,
     required this.areaRelativeValue,
   });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'areaId': areaId,
+        'photoPath': photoPath,
+        'date': date.toIso8601String(),
+        'areaRelativeValue': areaRelativeValue,
+      };
+
+  factory FollowUpPhoto.fromJson(Map<String, dynamic> json) {
+    return FollowUpPhoto(
+      id: json['id'],
+      areaId: json['areaId'],
+      photoPath: json['photoPath'],
+      date: DateTime.parse(json['date']),
+      areaRelativeValue: (json['areaRelativeValue'] as num).toDouble(),
+    );
+  }
 }
