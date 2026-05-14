@@ -6,6 +6,7 @@ workflows:
       flutter: stable
       xcode: latest
     scripts:
+      - flutter create .
       - flutter pub get
       - flutter build ipa --release
     artifacts:
