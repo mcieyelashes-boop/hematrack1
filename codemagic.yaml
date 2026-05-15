@@ -7,6 +7,19 @@ workflows:
     scripts:
       - flutter create .
       - flutter pub get
+      - |
+        python3 - <<'PY'
+        from pathlib import Path
+        path = Path('android/app/build.gradle')
+        text = path.read_text()
+        text = text.replace(
+            'sourceCompatibility = JavaVersion.VERSION_1_8\n        targetCompatibility = JavaVersion.VERSION_1_8',
+            'sourceCompatibility = JavaVersion.VERSION_17\n        targetCompatibility = JavaVersion.VERSION_17\n        coreLibraryDesugaringEnabled true'
+        )
+        if "desugar_jdk_libs" not in text:
+            text += "\n\ndependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'\n}\n"
+        path.write_text(text)
+        PY
       - flutter build apk --debug
     artifacts:
       - build/app/outputs/flutter-apk/app-debug.apk
@@ -23,6 +36,19 @@ workflows:
     scripts:
       - flutter create .
       - flutter pub get
+      - |
+        python3 - <<'PY'
+        from pathlib import Path
+        path = Path('android/app/build.gradle')
+        text = path.read_text()
+        text = text.replace(
+            'sourceCompatibility = JavaVersion.VERSION_1_8\n        targetCompatibility = JavaVersion.VERSION_1_8',
+            'sourceCompatibility = JavaVersion.VERSION_17\n        targetCompatibility = JavaVersion.VERSION_17\n        coreLibraryDesugaringEnabled true'
+        )
+        if "desugar_jdk_libs" not in text:
+            text += "\n\ndependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'\n}\n"
+        path.write_text(text)
+        PY
       - flutter build apk --release
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
