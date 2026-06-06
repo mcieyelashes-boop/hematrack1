@@ -11,8 +11,32 @@ workflows:
         python3 - <<'PY'
         from pathlib import Path
 
+        # ── Android manifest permissions ──────────────────────────────────
+        manifest = Path('android/app/src/main/AndroidManifest.xml')
+        if manifest.exists():
+            text = manifest.read_text()
+            perms = [
+                'android.permission.CAMERA',
+                'android.permission.POST_NOTIFICATIONS',
+                'android.permission.RECEIVE_BOOT_COMPLETED',
+                'android.permission.VIBRATE',
+            ]
+            for p in perms:
+                if p not in text:
+                    text = text.replace(
+                        '<application',
+                        f'    <uses-permission android:name="{p}"/>\n    <application',
+                    )
+            if 'android.hardware.camera' not in text:
+                text = text.replace(
+                    '<application',
+                    '    <uses-feature android:name="android.hardware.camera" android:required="false"/>\n    <application',
+                )
+            manifest.write_text(text)
+
+        # ── build.gradle desugaring ───────────────────────────────────────
         gradle = Path('android/app/build.gradle')
-        kts = Path('android/app/build.gradle.kts')
+        kts   = Path('android/app/build.gradle.kts')
 
         if gradle.exists():
             text = gradle.read_text()
@@ -58,8 +82,32 @@ workflows:
         python3 - <<'PY'
         from pathlib import Path
 
+        # ── Android manifest permissions ──────────────────────────────────
+        manifest = Path('android/app/src/main/AndroidManifest.xml')
+        if manifest.exists():
+            text = manifest.read_text()
+            perms = [
+                'android.permission.CAMERA',
+                'android.permission.POST_NOTIFICATIONS',
+                'android.permission.RECEIVE_BOOT_COMPLETED',
+                'android.permission.VIBRATE',
+            ]
+            for p in perms:
+                if p not in text:
+                    text = text.replace(
+                        '<application',
+                        f'    <uses-permission android:name="{p}"/>\n    <application',
+                    )
+            if 'android.hardware.camera' not in text:
+                text = text.replace(
+                    '<application',
+                    '    <uses-feature android:name="android.hardware.camera" android:required="false"/>\n    <application',
+                )
+            manifest.write_text(text)
+
+        # ── build.gradle desugaring ───────────────────────────────────────
         gradle = Path('android/app/build.gradle')
-        kts = Path('android/app/build.gradle.kts')
+        kts   = Path('android/app/build.gradle.kts')
 
         if gradle.exists():
             text = gradle.read_text()
@@ -102,6 +150,30 @@ workflows:
     scripts:
       - flutter create .
       - flutter pub get
+      - |
+        python3 - <<'PY'
+        from pathlib import Path
+
+        # ── iOS Info.plist usage descriptions ────────────────────────────
+        plist = Path('ios/Runner/Info.plist')
+        if plist.exists():
+            text = plist.read_text()
+            entries = {
+                'NSCameraUsageDescription':
+                    'Diperlukan untuk mengambil foto monitoring hemangioma.',
+                'NSPhotoLibraryAddUsageDescription':
+                    'Diperlukan untuk menyimpan foto monitoring ke galeri.',
+                'NSPhotoLibraryUsageDescription':
+                    'Diperlukan untuk mengakses foto monitoring yang tersimpan.',
+            }
+            for key, desc in entries.items():
+                if key not in text:
+                    text = text.replace(
+                        '</dict>\n</plist>',
+                        f'\t<key>{key}</key>\n\t<string>{desc}</string>\n</dict>\n</plist>',
+                    )
+            plist.write_text(text)
+        PY
       - flutter build ipa --release
     artifacts:
       - build/ios/ipa/*.ipa

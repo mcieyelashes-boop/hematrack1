@@ -1,6 +1,6 @@
 name: hematrack
-version: 0.1.0+1
-description: MVP aplikasi monitoring visual hemangioma anak dengan baseline photo dan ghost overlay.
+version: 1.0.0+1
+description: Aplikasi monitoring visual hemangioma anak dengan baseline photo, ghost overlay, timeline, dan laporan PDF.
 publish_to: 'none'
 
 environment:
@@ -13,9 +13,6 @@ dependencies:
   camera: ^0.11.0+2
   path_provider: ^2.1.4
   path: ^1.9.0
-  image: ^4.2.0
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
   flutter_local_notifications: ^17.2.2
   fl_chart: ^0.69.0
   pdf: ^3.11.1
