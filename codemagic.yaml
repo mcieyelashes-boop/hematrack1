@@ -11,33 +11,25 @@ workflows:
         python3 - <<'PY'
         from pathlib import Path
 
-        # ── Android manifest permissions ──────────────────────────────────
+        # ── Permissions ───────────────────────────────────────────────────
         manifest = Path('android/app/src/main/AndroidManifest.xml')
         if manifest.exists():
             text = manifest.read_text()
-            perms = [
+            for p in [
                 'android.permission.CAMERA',
                 'android.permission.POST_NOTIFICATIONS',
                 'android.permission.RECEIVE_BOOT_COMPLETED',
                 'android.permission.VIBRATE',
-            ]
-            for p in perms:
+            ]:
                 if p not in text:
-                    text = text.replace(
-                        '<application',
-                        f'    <uses-permission android:name="{p}"/>\n    <application',
-                    )
+                    text = text.replace('<application', f'    <uses-permission android:name="{p}"/>\n    <application')
             if 'android.hardware.camera' not in text:
-                text = text.replace(
-                    '<application',
-                    '    <uses-feature android:name="android.hardware.camera" android:required="false"/>\n    <application',
-                )
+                text = text.replace('<application', '    <uses-feature android:name="android.hardware.camera" android:required="false"/>\n    <application')
             manifest.write_text(text)
 
-        # ── build.gradle desugaring ───────────────────────────────────────
+        # ── Desugaring ────────────────────────────────────────────────────
         gradle = Path('android/app/build.gradle')
-        kts   = Path('android/app/build.gradle.kts')
-
+        kts    = Path('android/app/build.gradle.kts')
         if gradle.exists():
             text = gradle.read_text()
             if 'coreLibraryDesugaringEnabled true' not in text:
@@ -46,20 +38,14 @@ workflows:
             if 'desugar_jdk_libs' not in text:
                 text += "\n\ndependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'\n}\n"
             gradle.write_text(text)
-
         elif kts.exists():
             text = kts.read_text()
             if 'isCoreLibraryDesugaringEnabled = true' not in text:
                 text = text.replace('compileOptions {', 'compileOptions {\n        isCoreLibraryDesugaringEnabled = true')
             text = text.replace('VERSION_11', 'VERSION_17')
             if 'desugar_jdk_libs' not in text:
-                if 'dependencies {' in text:
-                    text = text.replace(
-                        'dependencies {',
-                        'dependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
-                    )
-                else:
-                    text += '\n\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n'
+                rep = 'dependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
+                text = text.replace('dependencies {', rep) if 'dependencies {' in text else text + f'\n\n{rep}\n}}\n'
             kts.write_text(text)
         PY
       - flutter build apk --debug
@@ -75,63 +61,138 @@ workflows:
     max_build_duration: 60
     environment:
       flutter: stable
+      # Set these 4 vars in Codemagic > App Settings > Environment variables
+      # Run scripts/gen_keystore.py once to generate them.
+      vars:
+        CM_KEY_ALIAS: hematrack
+        # CM_KEYSTORE_B64: <base64 from gen_keystore.py — set in dashboard, not here>
+        # CM_KEYSTORE_PASS: <set in dashboard>
+        # CM_KEY_PASS:      <set in dashboard>
     scripts:
       - flutter create .
       - flutter pub get
       - |
         python3 - <<'PY'
+        import os, base64
         from pathlib import Path
 
-        # ── Android manifest permissions ──────────────────────────────────
+        # ── Decode keystore from env var ──────────────────────────────────
+        b64 = os.environ.get('CM_KEYSTORE_B64', '').strip()
+        if not b64:
+            raise SystemExit(
+                "\n\nERROR: CM_KEYSTORE_B64 belum diset.\n"
+                "Jalankan: python3 scripts/gen_keystore.py\n"
+                "Lalu set 4 env vars di Codemagic > App Settings > Environment variables.\n"
+            )
+
+        ks_path  = Path('/tmp/hematrack.p12')
+        ks_pass  = os.environ.get('CM_KEYSTORE_PASS', 'HemaTrack2024!')
+        key_pass = os.environ.get('CM_KEY_PASS',      'HemaTrack2024!')
+        alias    = os.environ.get('CM_KEY_ALIAS',     'hematrack')
+
+        ks_path.write_bytes(base64.b64decode(b64))
+        print(f"Keystore decoded → {ks_path}")
+
+        # ── Write key.properties ──────────────────────────────────────────
+        Path('android/key.properties').write_text(
+            f"storePassword={ks_pass}\n"
+            f"keyPassword={key_pass}\n"
+            f"keyAlias={alias}\n"
+            f"storeFile={ks_path}\n"
+        )
+        print("key.properties written")
+
+        # ── Permissions ───────────────────────────────────────────────────
         manifest = Path('android/app/src/main/AndroidManifest.xml')
         if manifest.exists():
             text = manifest.read_text()
-            perms = [
+            for p in [
                 'android.permission.CAMERA',
                 'android.permission.POST_NOTIFICATIONS',
                 'android.permission.RECEIVE_BOOT_COMPLETED',
                 'android.permission.VIBRATE',
-            ]
-            for p in perms:
+            ]:
                 if p not in text:
-                    text = text.replace(
-                        '<application',
-                        f'    <uses-permission android:name="{p}"/>\n    <application',
-                    )
+                    text = text.replace('<application', f'    <uses-permission android:name="{p}"/>\n    <application')
             if 'android.hardware.camera' not in text:
-                text = text.replace(
-                    '<application',
-                    '    <uses-feature android:name="android.hardware.camera" android:required="false"/>\n    <application',
-                )
+                text = text.replace('<application', '    <uses-feature android:name="android.hardware.camera" android:required="false"/>\n    <application')
             manifest.write_text(text)
 
-        # ── build.gradle desugaring ───────────────────────────────────────
+        # ── Patch build.gradle: signing + desugaring ──────────────────────
         gradle = Path('android/app/build.gradle')
-        kts   = Path('android/app/build.gradle.kts')
+        kts    = Path('android/app/build.gradle.kts')
+
+        SIGN_HEADER = '''\
+def keystoreProps = new Properties()
+def kpFile = rootProject.file('key.properties')
+if (kpFile.exists()) { keystoreProps.load(new FileInputStream(kpFile)) }
+
+'''
+        SIGN_CONFIG = '''\
+    signingConfigs {
+        release {
+            keyAlias     keystoreProps['keyAlias']
+            keyPassword  keystoreProps['keyPassword']
+            storeFile    keystoreProps['storeFile'] ? file(keystoreProps['storeFile']) : null
+            storePassword keystoreProps['storePassword']
+        }
+    }
+    '''
 
         if gradle.exists():
             text = gradle.read_text()
+            if 'signingConfigs' not in text:
+                text = SIGN_HEADER + text
+                text = text.replace('    buildTypes {', SIGN_CONFIG + '    buildTypes {')
+                text = text.replace('signingConfig signingConfigs.debug', 'signingConfig signingConfigs.release')
+                if 'signingConfig signingConfigs.release' not in text:
+                    text = text.replace('release {\n', 'release {\n            signingConfig signingConfigs.release\n')
             if 'coreLibraryDesugaringEnabled true' not in text:
                 text = text.replace('compileOptions {', 'compileOptions {\n        coreLibraryDesugaringEnabled true')
             text = text.replace('VERSION_1_8', 'VERSION_17')
             if 'desugar_jdk_libs' not in text:
                 text += "\n\ndependencies {\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'\n}\n"
             gradle.write_text(text)
+            print("build.gradle patched (signing + desugaring)")
 
         elif kts.exists():
             text = kts.read_text()
+            if 'signingConfigs' not in text:
+                header = '''\
+val keystoreProps = java.util.Properties()
+val kpFile = rootProject.file("key.properties")
+if (kpFile.exists()) { kpFile.reader().use { keystoreProps.load(it) } }
+
+'''
+                text = header + text
+                sign_block = '''\
+    signingConfigs {
+        create("release") {
+            keyAlias      = keystoreProps["keyAlias"] as String
+            keyPassword   = keystoreProps["keyPassword"] as String
+            storeFile     = keystoreProps["storeFile"]?.let { file(it) }
+            storePassword = keystoreProps["storePassword"] as String
+        }
+    }
+    '''
+                text = text.replace('    buildTypes {', sign_block + '    buildTypes {')
+                text = text.replace(
+                    'signingConfig = signingConfigs.getByName("debug")',
+                    'signingConfig = signingConfigs.getByName("release")'
+                )
+                if 'signingConfig = signingConfigs.getByName("release")' not in text:
+                    text = text.replace(
+                        'getByName("release") {',
+                        'getByName("release") {\n            signingConfig = signingConfigs.getByName("release")'
+                    )
             if 'isCoreLibraryDesugaringEnabled = true' not in text:
                 text = text.replace('compileOptions {', 'compileOptions {\n        isCoreLibraryDesugaringEnabled = true')
             text = text.replace('VERSION_11', 'VERSION_17')
             if 'desugar_jdk_libs' not in text:
-                if 'dependencies {' in text:
-                    text = text.replace(
-                        'dependencies {',
-                        'dependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
-                    )
-                else:
-                    text += '\n\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n'
+                rep = 'dependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
+                text = text.replace('dependencies {', rep) if 'dependencies {' in text else text + f'\n\n{rep}\n}}\n'
             kts.write_text(text)
+            print("build.gradle.kts patched (signing + desugaring)")
         PY
       - flutter build apk --release
     artifacts:
@@ -154,7 +215,6 @@ workflows:
         python3 - <<'PY'
         from pathlib import Path
 
-        # ── iOS Info.plist usage descriptions ────────────────────────────
         plist = Path('ios/Runner/Info.plist')
         if plist.exists():
             text = plist.read_text()
@@ -162,9 +222,9 @@ workflows:
                 'NSCameraUsageDescription':
                     'Diperlukan untuk mengambil foto monitoring hemangioma.',
                 'NSPhotoLibraryAddUsageDescription':
-                    'Diperlukan untuk menyimpan foto monitoring ke galeri.',
+                    'Diperlukan untuk menyimpan foto monitoring.',
                 'NSPhotoLibraryUsageDescription':
-                    'Diperlukan untuk mengakses foto monitoring yang tersimpan.',
+                    'Diperlukan untuk mengakses foto monitoring.',
             }
             for key, desc in entries.items():
                 if key not in text:
@@ -173,6 +233,7 @@ workflows:
                         f'\t<key>{key}</key>\n\t<string>{desc}</string>\n</dict>\n</plist>',
                     )
             plist.write_text(text)
+            print("Info.plist patched with usage descriptions")
         PY
       - flutter build ipa --release
     artifacts:
