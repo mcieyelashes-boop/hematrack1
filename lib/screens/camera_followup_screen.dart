@@ -25,6 +25,7 @@ class _CameraFollowUpScreenState extends State<CameraFollowUpScreen> {
   String? _capturedPath;
   String? _baselinePath;
   String? _error;
+  double _relativeSize = 1.0;
 
   @override
   void initState() {
@@ -55,6 +56,16 @@ class _CameraFollowUpScreenState extends State<CameraFollowUpScreen> {
     }
   }
 
+  Future<void> _promptAndSave() async {
+    final picked = await showModalBottomSheet<double>(
+      context: context,
+      builder: (ctx) => _SizePickerSheet(initial: _relativeSize),
+    );
+    if (picked == null) return;
+    setState(() => _relativeSize = picked);
+    await _saveFollowUp();
+  }
+
   Future<void> _saveFollowUp() async {
     final path = _capturedPath;
     if (path == null) return;
@@ -67,7 +78,7 @@ class _CameraFollowUpScreenState extends State<CameraFollowUpScreen> {
         areaId: widget.areaId,
         photoPath: saved,
         date: DateTime.now(),
-        areaRelativeValue: 1.0,
+        areaRelativeValue: _relativeSize,
       );
       await HemangiomaRepository.instance.addFollowUp(photo);
       if (mounted) {
@@ -201,7 +212,7 @@ class _CameraFollowUpScreenState extends State<CameraFollowUpScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: _saving ? null : _saveFollowUp,
+                      onPressed: _saving ? null : _promptAndSave,
                       icon: const Icon(Icons.save),
                       label: _saving
                           ? const SizedBox(
@@ -217,6 +228,67 @@ class _CameraFollowUpScreenState extends State<CameraFollowUpScreen> {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SizePickerSheet extends StatefulWidget {
+  final double initial;
+  const _SizePickerSheet({required this.initial});
+
+  @override
+  State<_SizePickerSheet> createState() => _SizePickerSheetState();
+}
+
+class _SizePickerSheetState extends State<_SizePickerSheet> {
+  late double _value;
+
+  static const _options = [
+    (label: 'Sangat mengecil (< 50%)', value: 0.5),
+    (label: 'Mengecil (50–80%)', value: 0.7),
+    (label: 'Hampir sama (80–120%)', value: 1.0),
+    (label: 'Membesar (120–150%)', value: 1.3),
+    (label: 'Sangat membesar (> 150%)', value: 1.6),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _value = widget.initial;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Ukuran dibandingkan baseline:',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          ..._options.map(
+            (opt) => RadioListTile<double>(
+              title: Text(opt.label),
+              value: opt.value,
+              groupValue: _value,
+              onChanged: (v) => setState(() => _value = v!),
+              dense: true,
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context, _value),
+              child: const Text('Konfirmasi & Simpan'),
+            ),
+          ),
         ],
       ),
     );

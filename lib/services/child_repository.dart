@@ -30,6 +30,11 @@ class ChildRepository {
     await _save();
   }
 
+  Future<void> deleteChild(String id) async {
+    _children.removeWhere((c) => c.id == id);
+    await _save();
+  }
+
   Future<void> _save() async {
     await AppStorage.instance.writeJson(
       'children',

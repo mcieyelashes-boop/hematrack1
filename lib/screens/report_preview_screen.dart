@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:printing/printing.dart';
 
 import '../models/child.dart';
 import '../models/hemangioma_area.dart';
 import '../services/hemangioma_repository.dart';
+import '../services/report_service.dart';
 
-class ReportPreviewScreen extends StatelessWidget {
+class ReportPreviewScreen extends StatefulWidget {
   final Child child;
   final List<HemangiomaArea> areas;
 
@@ -14,6 +16,40 @@ class ReportPreviewScreen extends StatelessWidget {
     required this.child,
     required this.areas,
   });
+
+  @override
+  State<ReportPreviewScreen> createState() => _ReportPreviewScreenState();
+}
+
+class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
+  bool _exporting = false;
+
+  Future<void> _exportPdf() async {
+    setState(() => _exporting = true);
+    try {
+      final repo = HemangiomaRepository.instance;
+      final followUpsMap = {
+        for (final area in widget.areas)
+          area.id: repo.getFollowUpsForArea(area.id),
+      };
+      final bytes = await ReportService.instance.generatePdf(
+        child: widget.child,
+        areas: widget.areas,
+        followUpsMap: followUpsMap,
+      );
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: 'hematrack_${widget.child.name.replaceAll(' ', '_')}.pdf',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal membuat PDF: $e')),
+        );
+      }
+    }
+    if (mounted) setState(() => _exporting = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,13 +63,14 @@ class ReportPreviewScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _ReportHeader(child: child, fmt: fmt),
+            _ReportHeader(child: widget.child, fmt: fmt),
             const SizedBox(height: 16),
             const Divider(),
             const SizedBox(height: 8),
-            ...areas.map((area) {
+            ...widget.areas.map((area) {
               final followUps = repo.getFollowUpsForArea(area.id);
-              return _AreaReport(area: area, followUpCount: followUps.length, fmt: fmt);
+              return _AreaReport(
+                  area: area, followUpCount: followUps.length, fmt: fmt);
             }),
             const SizedBox(height: 24),
             const _DisclaimerBox(),
@@ -42,13 +79,15 @@ class ReportPreviewScreen extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.picture_as_pdf),
-                label: const Text('Export PDF (segera hadir)'),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Export PDF belum tersedia di versi ini')),
-                  );
-                },
+                label: _exporting
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Export & Bagikan PDF'),
+                onPressed: _exporting ? null : _exportPdf,
               ),
             ),
           ],
@@ -86,7 +125,8 @@ class _ReportHeader extends StatelessWidget {
                     TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             Text('Pasien: ${child.name}'),
-            Text('Tanggal lahir: ${fmt.format(child.birthDate)} ($ageStr)'),
+            Text(
+                'Tanggal lahir: ${fmt.format(child.birthDate)} ($ageStr)'),
             Text('Tanggal laporan: ${fmt.format(now)}'),
           ],
         ),
@@ -127,7 +167,7 @@ class _AreaReport extends StatelessWidget {
                 area.baselinePhotoPath.isNotEmpty
                     ? fmt.format(area.baselineDate)
                     : 'Belum ada'),
-            _InfoRow('Jumlah follow-up', '$followUpCount foto'),
+            _InfoRow('Follow-up', '$followUpCount foto'),
             if (area.notes.isNotEmpty) _InfoRow('Catatan', area.notes),
           ],
         ),
@@ -148,11 +188,14 @@ class _InfoRow extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 120,
+            width: 90,
             child: Text('$label:',
-                style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                style:
+                    const TextStyle(color: Colors.grey, fontSize: 13)),
           ),
-          Expanded(child: Text(value, style: const TextStyle(fontSize: 13))),
+          Expanded(
+              child:
+                  Text(value, style: const TextStyle(fontSize: 13))),
         ],
       ),
     );
@@ -172,7 +215,8 @@ class _DisclaimerBox extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: const Text(
-        '⚠ Laporan ini hanya untuk dokumentasi visual. Bukan alat diagnosis medis. Konsultasikan ke dokter untuk evaluasi klinis.',
+        '⚠ Laporan ini hanya untuk dokumentasi visual. Bukan alat diagnosis medis. '
+        'Konsultasikan ke dokter untuk evaluasi klinis.',
         style: TextStyle(fontSize: 12),
       ),
     );

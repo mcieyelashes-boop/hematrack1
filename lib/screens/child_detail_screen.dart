@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/child.dart';
 import '../models/hemangioma_area.dart';
 import '../services/hemangioma_repository.dart';
+import '../services/reminder_service.dart';
 import 'camera_baseline_screen.dart';
 import 'camera_followup_screen.dart';
 import 'comparison_screen.dart';
@@ -20,11 +21,13 @@ class ChildDetailScreen extends StatefulWidget {
 
 class _ChildDetailScreenState extends State<ChildDetailScreen> {
   List<HemangiomaArea> _areas = [];
+  bool _reminderActive = false;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _checkReminder();
   }
 
   void _load() {
@@ -34,21 +37,101 @@ class _ChildDetailScreenState extends State<ChildDetailScreen> {
     });
   }
 
+  Future<void> _checkReminder() async {
+    final active = await ReminderService.instance.isScheduled();
+    if (mounted) setState(() => _reminderActive = active);
+  }
+
+  Future<void> _toggleReminder() async {
+    if (_reminderActive) {
+      await ReminderService.instance.cancelReminder();
+      setState(() => _reminderActive = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Pengingat mingguan dimatikan')),
+        );
+      }
+    } else {
+      final granted =
+          await ReminderService.instance.requestPermission();
+      if (!granted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Izin notifikasi diperlukan untuk pengingat')),
+          );
+        }
+        return;
+      }
+      await ReminderService.instance
+          .scheduleWeeklyReminder(widget.child.name);
+      setState(() => _reminderActive = true);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Pengingat mingguan diaktifkan')),
+        );
+      }
+    }
+  }
+
   Future<void> _openAddArea() async {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => HemangiomaAreaFormScreen(childId: widget.child.id),
+        builder: (_) =>
+            HemangiomaAreaFormScreen(childId: widget.child.id),
       ),
     );
     _load();
+  }
+
+  Future<void> _deleteArea(HemangiomaArea area) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Area'),
+        content: Text(
+            'Hapus area "${area.bodyLocation}" beserta semua fotonya?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Hapus',
+                style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await HemangiomaRepository.instance.deleteArea(area.id);
+      _load();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final child = widget.child;
     return Scaffold(
-      appBar: AppBar(title: Text(child.name)),
+      appBar: AppBar(
+        title: Text(child.name),
+        actions: [
+          IconButton(
+            icon: Icon(
+              _reminderActive
+                  ? Icons.notifications_active
+                  : Icons.notifications_none,
+              color: _reminderActive ? Colors.pinkAccent : null,
+            ),
+            tooltip: _reminderActive
+                ? 'Matikan pengingat mingguan'
+                : 'Aktifkan pengingat mingguan',
+            onPressed: _toggleReminder,
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -58,8 +141,8 @@ class _ChildDetailScreenState extends State<ChildDetailScreen> {
             children: [
               const Expanded(
                 child: Text('Area Hemangioma',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    style: TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold)),
               ),
               if (_areas.isNotEmpty)
                 TextButton.icon(
@@ -122,6 +205,7 @@ class _ChildDetailScreenState extends State<ChildDetailScreen> {
                     builder: (_) => ComparisonScreen(areaId: area.id),
                   ),
                 ),
+                onDelete: () => _deleteArea(area),
               ),
             ),
         ],
@@ -184,6 +268,7 @@ class _AreaCard extends StatelessWidget {
   final VoidCallback onFollowUp;
   final VoidCallback onTimeline;
   final VoidCallback onComparison;
+  final VoidCallback onDelete;
 
   const _AreaCard({
     required this.area,
@@ -191,6 +276,7 @@ class _AreaCard extends StatelessWidget {
     required this.onFollowUp,
     required this.onTimeline,
     required this.onComparison,
+    required this.onDelete,
   });
 
   @override
@@ -232,12 +318,22 @@ class _AreaCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(width: 4),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline,
+                      size: 20, color: Colors.red),
+                  onPressed: onDelete,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Hapus area',
+                ),
               ],
             ),
             if (area.notes.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(area.notes,
-                  style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                  style:
+                      const TextStyle(color: Colors.grey, fontSize: 13)),
             ],
             const SizedBox(height: 10),
             Wrap(
@@ -246,7 +342,8 @@ class _AreaCard extends StatelessWidget {
               children: [
                 _Chip(
                   icon: Icons.camera_alt,
-                  label: hasBaseline ? 'Ganti Baseline' : 'Ambil Baseline',
+                  label:
+                      hasBaseline ? 'Ganti Baseline' : 'Ambil Baseline',
                   onTap: onBaseline,
                 ),
                 if (hasBaseline) ...[

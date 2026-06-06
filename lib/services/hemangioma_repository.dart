@@ -65,6 +65,24 @@ class HemangiomaRepository {
     await _saveFollowUps();
   }
 
+  Future<void> deleteArea(String areaId) async {
+    _areas.removeWhere((a) => a.id == areaId);
+    _followUps.removeWhere((f) => f.areaId == areaId);
+    await _saveAreas();
+    await _saveFollowUps();
+  }
+
+  Future<void> deleteAllAreasForChild(String childId) async {
+    final ids = _areas
+        .where((a) => a.childId == childId)
+        .map((a) => a.id)
+        .toSet();
+    _areas.removeWhere((a) => a.childId == childId);
+    _followUps.removeWhere((f) => ids.contains(f.areaId));
+    await _saveAreas();
+    await _saveFollowUps();
+  }
+
   Future<void> _saveAreas() async {
     await AppStorage.instance.writeJson(
       'areas',

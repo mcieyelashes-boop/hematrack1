@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/child.dart';
 import '../services/child_repository.dart';
+import '../services/hemangioma_repository.dart';
 import 'child_detail_screen.dart';
 import 'child_profile_form_screen.dart';
 import 'onboarding_disclaimer_screen.dart';
@@ -77,21 +78,41 @@ class _ChildListScreenState extends State<ChildListScreen> {
               itemCount: _children.length,
               itemBuilder: (context, index) {
                 final child = _children[index];
-                return Card(
-                  child: ListTile(
-                    leading: const CircleAvatar(child: Icon(Icons.child_care)),
-                    title: Text(child.name,
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text(_ageString(child.birthDate)),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => ChildDetailScreen(child: child)),
-                      );
-                      _load();
-                    },
+                return Dismissible(
+                  key: ValueKey(child.id),
+                  direction: DismissDirection.endToStart,
+                  confirmDismiss: (_) => _confirmDelete(child.name),
+                  onDismissed: (_) async {
+                    await HemangiomaRepository.instance
+                        .deleteAllAreasForChild(child.id);
+                    await ChildRepository.instance.deleteChild(child.id);
+                    _load();
+                  },
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 20),
+                    color: Colors.red,
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  child: Card(
+                    child: ListTile(
+                      leading:
+                          const CircleAvatar(child: Icon(Icons.child_care)),
+                      title: Text(child.name,
+                          style:
+                              const TextStyle(fontWeight: FontWeight.w600)),
+                      subtitle: Text(_ageString(child.birthDate)),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) =>
+                                  ChildDetailScreen(child: child)),
+                        );
+                        _load();
+                      },
+                    ),
                   ),
                 );
               },
@@ -102,6 +123,28 @@ class _ChildListScreenState extends State<ChildListScreen> {
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  Future<bool> _confirmDelete(String name) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Hapus Profil Anak'),
+            content: Text(
+                'Hapus "$name" beserta semua area dan foto? Tindakan ini tidak dapat dibatalkan.'),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('Batal')),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Hapus',
+                    style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 
   String _ageString(DateTime birthDate) {
