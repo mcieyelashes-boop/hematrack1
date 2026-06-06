@@ -1,17 +1,179 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import '../models/child.dart';
+import '../models/hemangioma_area.dart';
+import '../services/hemangioma_repository.dart';
 
 class ReportPreviewScreen extends StatelessWidget {
-  const ReportPreviewScreen({super.key});
+  final Child child;
+  final List<HemangiomaArea> areas;
+
+  const ReportPreviewScreen({
+    super.key,
+    required this.child,
+    required this.areas,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final fmt = DateFormat('dd/MM/yyyy');
+    final repo = HemangiomaRepository.instance;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Report Preview')),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () {},
-          child: const Text('Export PDF'),
+      appBar: AppBar(title: const Text('Laporan Monitoring')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _ReportHeader(child: child, fmt: fmt),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 8),
+            ...areas.map((area) {
+              final followUps = repo.getFollowUpsForArea(area.id);
+              return _AreaReport(area: area, followUpCount: followUps.length, fmt: fmt);
+            }),
+            const SizedBox(height: 24),
+            const _DisclaimerBox(),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.picture_as_pdf),
+                label: const Text('Export PDF (segera hadir)'),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Export PDF belum tersedia di versi ini')),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+class _ReportHeader extends StatelessWidget {
+  final Child child;
+  final DateFormat fmt;
+  const _ReportHeader({required this.child, required this.fmt});
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    int months = (now.year - child.birthDate.year) * 12 +
+        now.month -
+        child.birthDate.month;
+    if (now.day < child.birthDate.day) months--;
+    final ageStr = months < 12
+        ? '$months bulan'
+        : '${months ~/ 12} tahun ${months % 12} bulan';
+
+    return Card(
+      color: Theme.of(context).colorScheme.primaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Laporan Monitoring Hemangioma',
+                style:
+                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text('Pasien: ${child.name}'),
+            Text('Tanggal lahir: ${fmt.format(child.birthDate)} ($ageStr)'),
+            Text('Tanggal laporan: ${fmt.format(now)}'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AreaReport extends StatelessWidget {
+  final HemangiomaArea area;
+  final int followUpCount;
+  final DateFormat fmt;
+  const _AreaReport(
+      {required this.area,
+      required this.followUpCount,
+      required this.fmt});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.location_on,
+                    color: Colors.pinkAccent, size: 18),
+                const SizedBox(width: 6),
+                Text(area.bodyLocation,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 15)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            _InfoRow('Baseline',
+                area.baselinePhotoPath.isNotEmpty
+                    ? fmt.format(area.baselineDate)
+                    : 'Belum ada'),
+            _InfoRow('Jumlah follow-up', '$followUpCount foto'),
+            if (area.notes.isNotEmpty) _InfoRow('Catatan', area.notes),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _InfoRow(this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text('$label:',
+                style: const TextStyle(color: Colors.grey, fontSize: 13)),
+          ),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 13))),
+        ],
+      ),
+    );
+  }
+}
+
+class _DisclaimerBox extends StatelessWidget {
+  const _DisclaimerBox();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        border: Border.all(color: Colors.orange.shade200),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Text(
+        '⚠ Laporan ini hanya untuk dokumentasi visual. Bukan alat diagnosis medis. Konsultasikan ke dokter untuk evaluasi klinis.',
+        style: TextStyle(fontSize: 12),
       ),
     );
   }

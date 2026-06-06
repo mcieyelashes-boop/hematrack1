@@ -1,33 +1,47 @@
+import 'dart:io';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
+import '../models/follow_up_photo.dart';
+import '../services/app_storage.dart';
 import '../services/camera_capture_service.dart';
+import '../services/hemangioma_repository.dart';
 
 class CameraFollowUpScreen extends StatefulWidget {
-  const CameraFollowUpScreen({super.key});
+  final String areaId;
+  const CameraFollowUpScreen({super.key, required this.areaId});
 
   @override
   State<CameraFollowUpScreen> createState() => _CameraFollowUpScreenState();
 }
 
 class _CameraFollowUpScreenState extends State<CameraFollowUpScreen> {
-  final CameraCaptureService _cameraService = CameraCaptureService();
+  final _cameraService = CameraCaptureService();
   bool _loading = true;
+  bool _saving = false;
   double _overlayOpacity = 0.35;
-  String? _lastPhotoPath;
+  String? _capturedPath;
+  String? _baselinePath;
   String? _error;
 
   @override
   void initState() {
     super.initState();
+    final area =
+        HemangiomaRepository.instance.findAreaById(widget.areaId);
+    if (area != null && area.baselinePhotoPath.isNotEmpty) {
+      _baselinePath = area.baselinePhotoPath;
+    }
     _initCamera();
   }
 
   Future<void> _initCamera() async {
     try {
       await _cameraService.initialize();
-    } catch (error) {
-      _error = error.toString();
+    } catch (e) {
+      _error = e.toString();
     }
     if (mounted) setState(() => _loading = false);
   }
@@ -35,10 +49,37 @@ class _CameraFollowUpScreenState extends State<CameraFollowUpScreen> {
   Future<void> _capture() async {
     try {
       final path = await _cameraService.capturePhoto();
-      if (mounted) setState(() => _lastPhotoPath = path);
-    } catch (error) {
-      if (mounted) setState(() => _error = error.toString());
+      if (mounted) setState(() => _capturedPath = path);
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
     }
+  }
+
+  Future<void> _saveFollowUp() async {
+    final path = _capturedPath;
+    if (path == null) return;
+    setState(() => _saving = true);
+    try {
+      final id = const Uuid().v4();
+      final saved = await AppStorage.instance.savePhoto(path, 'followup_$id');
+      final photo = FollowUpPhoto(
+        id: id,
+        areaId: widget.areaId,
+        photoPath: saved,
+        date: DateTime.now(),
+        areaRelativeValue: 1.0,
+      );
+      await HemangiomaRepository.instance.addFollowUp(photo);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Follow-up tersimpan')),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    }
+    if (mounted) setState(() => _saving = false);
   }
 
   @override
@@ -60,80 +101,122 @@ class _CameraFollowUpScreenState extends State<CameraFollowUpScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : _error != null
                     ? Center(child: Text(_error!))
-                    : controller != null && controller.value.isInitialized
-                        ? CameraPreview(controller)
-                        : const Center(child: Text('Kamera tidak tersedia')),
+                    : _capturedPath != null
+                        ? Image.file(File(_capturedPath!), fit: BoxFit.cover)
+                        : controller != null &&
+                                controller.value.isInitialized
+                            ? CameraPreview(controller)
+                            : const Center(
+                                child: Text('Kamera tidak tersedia')),
           ),
-          Opacity(
-            opacity: _overlayOpacity,
-            child: Center(
-              child: Container(
-                width: 260,
-                height: 260,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.blueAccent, width: 3),
-                  borderRadius: BorderRadius.circular(16),
+          if (_capturedPath == null) ...[
+            if (_baselinePath != null &&
+                File(_baselinePath!).existsSync())
+              Positioned.fill(
+                child: Opacity(
+                  opacity: _overlayOpacity,
+                  child: Image.file(File(_baselinePath!), fit: BoxFit.cover),
                 ),
-                child: const Center(
-                  child: Text(
-                    'Baseline Overlay',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+              )
+            else
+              Opacity(
+                opacity: _overlayOpacity,
+                child: Center(
+                  child: Container(
+                    width: 260,
+                    height: 260,
+                    decoration: BoxDecoration(
+                      border:
+                          Border.all(color: Colors.blueAccent, width: 3),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Center(
+                      child: Text('Baseline Overlay',
+                          style:
+                              TextStyle(fontWeight: FontWeight.bold)),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-          const Positioned(
-            top: 24,
-            left: 16,
-            right: 16,
-            child: Card(
-              child: Padding(
-                padding: EdgeInsets.all(12),
-                child: Text(
-                  'Samakan posisi dengan baseline. Atur transparansi overlay bila perlu.',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 112,
-            left: 20,
-            right: 20,
-            child: Card(
-              child: Slider(
-                value: _overlayOpacity,
-                min: 0.05,
-                max: 0.8,
-                onChanged: (value) => setState(() => _overlayOpacity = value),
-              ),
-            ),
-          ),
-          if (_lastPhotoPath != null)
-            Positioned(
-              bottom: 176,
+            const Positioned(
+              top: 24,
               left: 16,
               right: 16,
               child: Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Text('Foto follow-up tersimpan: $_lastPhotoPath'),
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                    'Samakan posisi dengan baseline. Atur transparansi overlay bila perlu.',
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
             ),
-          Positioned(
-            bottom: 40,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: ElevatedButton.icon(
-                onPressed: _loading ? null : _capture,
-                icon: const Icon(Icons.camera_alt),
-                label: const Text('Capture Follow-up'),
+            Positioned(
+              bottom: 112,
+              left: 20,
+              right: 20,
+              child: Card(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Slider(
+                      value: _overlayOpacity,
+                      min: 0.05,
+                      max: 0.8,
+                      onChanged: (v) =>
+                          setState(() => _overlayOpacity = v),
+                    ),
+                  ],
+                ),
               ),
             ),
-          )
+            Positioned(
+              bottom: 40,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: ElevatedButton.icon(
+                  onPressed: _loading ? null : _capture,
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text('Capture Follow-up'),
+                ),
+              ),
+            ),
+          ] else ...[
+            Positioned(
+              bottom: 32,
+              left: 16,
+              right: 16,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () =>
+                          setState(() => _capturedPath = null),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Ulangi'),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _saving ? null : _saveFollowUp,
+                      icon: const Icon(Icons.save),
+                      label: _saving
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2),
+                            )
+                          : const Text('Simpan'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
