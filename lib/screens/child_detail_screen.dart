@@ -6,6 +6,7 @@ import '../services/hemangioma_repository.dart';
 import '../services/reminder_service.dart';
 import 'camera_baseline_screen.dart';
 import 'camera_followup_screen.dart';
+import 'child_profile_form_screen.dart';
 import 'comparison_screen.dart';
 import 'hemangioma_area_form_screen.dart';
 import 'report_preview_screen.dart';
@@ -20,31 +21,32 @@ class ChildDetailScreen extends StatefulWidget {
 }
 
 class _ChildDetailScreenState extends State<ChildDetailScreen> {
+  late Child _child;
   List<HemangiomaArea> _areas = [];
   bool _reminderActive = false;
 
   @override
   void initState() {
     super.initState();
+    _child = widget.child;
     _load();
     _checkReminder();
   }
 
   void _load() {
     setState(() {
-      _areas =
-          HemangiomaRepository.instance.getAreasForChild(widget.child.id);
+      _areas = HemangiomaRepository.instance.getAreasForChild(_child.id);
     });
   }
 
   Future<void> _checkReminder() async {
-    final active = await ReminderService.instance.isScheduled();
+    final active = await ReminderService.instance.isScheduled(_child.id);
     if (mounted) setState(() => _reminderActive = active);
   }
 
   Future<void> _toggleReminder() async {
     if (_reminderActive) {
-      await ReminderService.instance.cancelReminder();
+      await ReminderService.instance.cancelReminder(_child.id);
       setState(() => _reminderActive = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -52,8 +54,7 @@ class _ChildDetailScreenState extends State<ChildDetailScreen> {
         );
       }
     } else {
-      final granted =
-          await ReminderService.instance.requestPermission();
+      final granted = await ReminderService.instance.requestPermission();
       if (!granted) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -64,14 +65,25 @@ class _ChildDetailScreenState extends State<ChildDetailScreen> {
         return;
       }
       await ReminderService.instance
-          .scheduleWeeklyReminder(widget.child.name);
+          .scheduleWeeklyReminder(_child.name, _child.id);
       setState(() => _reminderActive = true);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Pengingat mingguan diaktifkan')),
+          const SnackBar(content: Text('Pengingat mingguan diaktifkan')),
         );
       }
+    }
+  }
+
+  Future<void> _openEditChild() async {
+    final updated = await Navigator.push<Child>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChildProfileFormScreen(editChild: _child),
+      ),
+    );
+    if (updated != null) {
+      setState(() => _child = updated);
     }
   }
 
@@ -79,8 +91,20 @@ class _ChildDetailScreenState extends State<ChildDetailScreen> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            HemangiomaAreaFormScreen(childId: widget.child.id),
+        builder: (_) => HemangiomaAreaFormScreen(childId: _child.id),
+      ),
+    );
+    _load();
+  }
+
+  Future<void> _openEditArea(HemangiomaArea area) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HemangiomaAreaFormScreen(
+          childId: _child.id,
+          editArea: area,
+        ),
       ),
     );
     _load();
@@ -91,16 +115,16 @@ class _ChildDetailScreenState extends State<ChildDetailScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Hapus Area'),
-        content: Text(
-            'Hapus area "${area.bodyLocation}" beserta semua fotonya?'),
+        content:
+            Text('Hapus area "${area.bodyLocation}" beserta semua fotonya?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
               child: const Text('Batal')),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Hapus',
-                style: TextStyle(color: Colors.red)),
+            child:
+                const Text('Hapus', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -113,11 +137,15 @@ class _ChildDetailScreenState extends State<ChildDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final child = widget.child;
     return Scaffold(
       appBar: AppBar(
-        title: Text(child.name),
+        title: Text(_child.name),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Edit profil anak',
+            onPressed: _openEditChild,
+          ),
           IconButton(
             icon: Icon(
               _reminderActive
@@ -135,7 +163,7 @@ class _ChildDetailScreenState extends State<ChildDetailScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _ChildInfoCard(child: child),
+          _ChildInfoCard(child: _child),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -152,7 +180,7 @@ class _ChildDetailScreenState extends State<ChildDetailScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (_) => ReportPreviewScreen(
-                        child: child,
+                        child: _child,
                         areas: _areas,
                       ),
                     ),
@@ -205,6 +233,7 @@ class _ChildDetailScreenState extends State<ChildDetailScreen> {
                     builder: (_) => ComparisonScreen(areaId: area.id),
                   ),
                 ),
+                onEdit: () => _openEditArea(area),
                 onDelete: () => _deleteArea(area),
               ),
             ),
@@ -219,21 +248,13 @@ class _ChildDetailScreenState extends State<ChildDetailScreen> {
   }
 }
 
+// ─────────────────────────────────────────────
 class _ChildInfoCard extends StatelessWidget {
   final Child child;
   const _ChildInfoCard({required this.child});
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-    int months = (now.year - child.birthDate.year) * 12 +
-        now.month -
-        child.birthDate.month;
-    if (now.day < child.birthDate.day) months--;
-    final ageStr = months < 12
-        ? '$months bulan'
-        : '${months ~/ 12} tahun ${months % 12} bulan';
-
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -252,7 +273,7 @@ class _ChildInfoCard extends StatelessWidget {
                         fontSize: 18, fontWeight: FontWeight.bold)),
                 Text(
                     'Lahir: ${child.birthDate.day}/${child.birthDate.month}/${child.birthDate.year}'),
-                Text('Usia: $ageStr'),
+                Text('Usia: ${child.ageString}'),
               ],
             ),
           ],
@@ -262,12 +283,14 @@ class _ChildInfoCard extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────
 class _AreaCard extends StatelessWidget {
   final HemangiomaArea area;
   final VoidCallback onBaseline;
   final VoidCallback onFollowUp;
   final VoidCallback onTimeline;
   final VoidCallback onComparison;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _AreaCard({
@@ -276,6 +299,7 @@ class _AreaCard extends StatelessWidget {
     required this.onFollowUp,
     required this.onTimeline,
     required this.onComparison,
+    required this.onEdit,
     required this.onDelete,
   });
 
@@ -300,8 +324,8 @@ class _AreaCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: hasBaseline
                         ? Colors.green.shade100
@@ -320,8 +344,17 @@ class _AreaCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 IconButton(
+                  icon: const Icon(Icons.edit_outlined,
+                      size: 18, color: Colors.blueGrey),
+                  onPressed: onEdit,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Edit area',
+                ),
+                const SizedBox(width: 4),
+                IconButton(
                   icon: const Icon(Icons.delete_outline,
-                      size: 20, color: Colors.red),
+                      size: 18, color: Colors.red),
                   onPressed: onDelete,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -342,8 +375,7 @@ class _AreaCard extends StatelessWidget {
               children: [
                 _Chip(
                   icon: Icons.camera_alt,
-                  label:
-                      hasBaseline ? 'Ganti Baseline' : 'Ambil Baseline',
+                  label: hasBaseline ? 'Ganti Baseline' : 'Ambil Baseline',
                   onTap: onBaseline,
                 ),
                 if (hasBaseline) ...[

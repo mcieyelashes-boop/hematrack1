@@ -5,7 +5,10 @@ import '../models/child.dart';
 import '../services/child_repository.dart';
 
 class ChildProfileFormScreen extends StatefulWidget {
-  const ChildProfileFormScreen({super.key});
+  /// Jika diisi, screen berjalan dalam mode edit.
+  final Child? editChild;
+
+  const ChildProfileFormScreen({super.key, this.editChild});
 
   @override
   State<ChildProfileFormScreen> createState() =>
@@ -17,6 +20,17 @@ class _ChildProfileFormScreenState extends State<ChildProfileFormScreen> {
   DateTime? _birthDate;
   bool _saving = false;
 
+  bool get _isEdit => widget.editChild != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEdit) {
+      _nameController.text = widget.editChild!.name;
+      _birthDate = widget.editChild!.birthDate;
+    }
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -26,7 +40,7 @@ class _ChildProfileFormScreenState extends State<ChildProfileFormScreen> {
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: _birthDate ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
     );
@@ -48,20 +62,34 @@ class _ChildProfileFormScreenState extends State<ChildProfileFormScreen> {
       return;
     }
     setState(() => _saving = true);
-    final child = Child(
-      id: const Uuid().v4(),
-      name: name,
-      birthDate: _birthDate!,
-      createdAt: DateTime.now(),
-    );
-    await ChildRepository.instance.addChild(child);
-    if (mounted) Navigator.pop(context);
+
+    if (_isEdit) {
+      // Pertahankan id dan createdAt yang lama
+      final updated = Child(
+        id: widget.editChild!.id,
+        name: name,
+        birthDate: _birthDate!,
+        createdAt: widget.editChild!.createdAt,
+      );
+      await ChildRepository.instance.updateChild(updated);
+      if (mounted) Navigator.pop(context, updated);
+    } else {
+      final child = Child(
+        id: const Uuid().v4(),
+        name: name,
+        birthDate: _birthDate!,
+        createdAt: DateTime.now(),
+      );
+      await ChildRepository.instance.addChild(child);
+      if (mounted) Navigator.pop(context);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Profil Anak')),
+      appBar:
+          AppBar(title: Text(_isEdit ? 'Edit Profil Anak' : 'Profil Anak')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -105,7 +133,7 @@ class _ChildProfileFormScreenState extends State<ChildProfileFormScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Simpan Profil'),
+                    : Text(_isEdit ? 'Simpan Perubahan' : 'Simpan Profil'),
               ),
             ),
           ],

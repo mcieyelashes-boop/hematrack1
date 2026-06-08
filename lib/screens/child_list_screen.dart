@@ -101,7 +101,7 @@ class _ChildListScreenState extends State<ChildListScreen> {
                       title: Text(child.name,
                           style:
                               const TextStyle(fontWeight: FontWeight.w600)),
-                      subtitle: Text(_ageString(child.birthDate)),
+                      subtitle: Text(child.ageString),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () async {
                         await Navigator.push(
@@ -147,13 +147,4 @@ class _ChildListScreenState extends State<ChildListScreen> {
         false;
   }
 
-  String _ageString(DateTime birthDate) {
-    final now = DateTime.now();
-    int months =
-        (now.year - birthDate.year) * 12 + now.month - birthDate.month;
-    if (now.day < birthDate.day) months--;
-    if (months < 1) return 'Kurang dari 1 bulan';
-    if (months < 12) return '$months bulan';
-    return '${months ~/ 12} tahun ${months % 12} bulan';
-  }
 }

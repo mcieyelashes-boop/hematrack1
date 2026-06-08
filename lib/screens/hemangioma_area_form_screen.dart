@@ -6,7 +6,15 @@ import '../services/hemangioma_repository.dart';
 
 class HemangiomaAreaFormScreen extends StatefulWidget {
   final String childId;
-  const HemangiomaAreaFormScreen({super.key, required this.childId});
+
+  /// Jika diisi, screen berjalan dalam mode edit.
+  final HemangiomaArea? editArea;
+
+  const HemangiomaAreaFormScreen({
+    super.key,
+    required this.childId,
+    this.editArea,
+  });
 
   @override
   State<HemangiomaAreaFormScreen> createState() =>
@@ -19,11 +27,30 @@ class _HemangiomaAreaFormScreenState
   final _notesController = TextEditingController();
   bool _saving = false;
 
+  bool get _isEdit => widget.editArea != null;
+
   static const _quickLocations = [
-    'Kepala', 'Wajah', 'Leher', 'Dada', 'Perut',
-    'Punggung', 'Lengan kanan', 'Lengan kiri', 'Kaki kanan', 'Kaki kiri',
+    'Kepala',
+    'Wajah',
+    'Leher',
+    'Dada',
+    'Perut',
+    'Punggung',
+    'Lengan kanan',
+    'Lengan kiri',
+    'Kaki kanan',
+    'Kaki kiri',
     'Lainnya',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEdit) {
+      _locationController.text = widget.editArea!.bodyLocation;
+      _notesController.text = widget.editArea!.notes;
+    }
+  }
 
   @override
   void dispose() {
@@ -41,22 +68,40 @@ class _HemangiomaAreaFormScreenState
       return;
     }
     setState(() => _saving = true);
-    final area = HemangiomaArea(
-      id: const Uuid().v4(),
-      childId: widget.childId,
-      bodyLocation: location,
-      baselinePhotoPath: '',
-      baselineDate: DateTime.now(),
-      notes: _notesController.text.trim(),
-    );
-    await HemangiomaRepository.instance.addArea(area);
+
+    if (_isEdit) {
+      final old = widget.editArea!;
+      final updated = HemangiomaArea(
+        id: old.id,
+        childId: old.childId,
+        bodyLocation: location,
+        baselinePhotoPath: old.baselinePhotoPath,
+        baselineDate: old.baselineDate,
+        baselineAreaValue: old.baselineAreaValue,
+        notes: _notesController.text.trim(),
+      );
+      await HemangiomaRepository.instance.updateArea(updated);
+    } else {
+      final area = HemangiomaArea(
+        id: const Uuid().v4(),
+        childId: widget.childId,
+        bodyLocation: location,
+        baselinePhotoPath: '',
+        baselineDate: DateTime.now(),
+        notes: _notesController.text.trim(),
+      );
+      await HemangiomaRepository.instance.addArea(area);
+    }
+
     if (mounted) Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Area Hemangioma')),
+      appBar: AppBar(
+          title: Text(
+              _isEdit ? 'Edit Area Hemangioma' : 'Area Hemangioma')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -80,7 +125,8 @@ class _HemangiomaAreaFormScreenState
               children: _quickLocations
                   .map(
                     (loc) => ActionChip(
-                      label: Text(loc, style: const TextStyle(fontSize: 12)),
+                      label: Text(loc,
+                          style: const TextStyle(fontSize: 12)),
                       visualDensity: VisualDensity.compact,
                       onPressed: () =>
                           setState(() => _locationController.text = loc),
@@ -106,9 +152,11 @@ class _HemangiomaAreaFormScreenState
                     ? const SizedBox(
                         height: 20,
                         width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child:
+                            CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Simpan Area'),
+                    : Text(
+                        _isEdit ? 'Simpan Perubahan' : 'Simpan Area'),
               ),
             ),
           ],

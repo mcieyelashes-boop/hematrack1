@@ -105,14 +105,6 @@ class _ReportHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    int months = (now.year - child.birthDate.year) * 12 +
-        now.month -
-        child.birthDate.month;
-    if (now.day < child.birthDate.day) months--;
-    final ageStr = months < 12
-        ? '$months bulan'
-        : '${months ~/ 12} tahun ${months % 12} bulan';
-
     return Card(
       color: Theme.of(context).colorScheme.primaryContainer,
       child: Padding(
@@ -126,7 +118,7 @@ class _ReportHeader extends StatelessWidget {
             const SizedBox(height: 4),
             Text('Pasien: ${child.name}'),
             Text(
-                'Tanggal lahir: ${fmt.format(child.birthDate)} ($ageStr)'),
+                'Tanggal lahir: ${fmt.format(child.birthDate)} (${child.ageString})'),
             Text('Tanggal laporan: ${fmt.format(now)}'),
           ],
         ),

@@ -30,6 +30,13 @@ class ChildRepository {
     await _save();
   }
 
+  Future<void> updateChild(Child updated) async {
+    final idx = _children.indexWhere((c) => c.id == updated.id);
+    if (idx == -1) return;
+    _children[idx] = updated;
+    await _save();
+  }
+
   Future<void> deleteChild(String id) async {
     _children.removeWhere((c) => c.id == id);
     await _save();

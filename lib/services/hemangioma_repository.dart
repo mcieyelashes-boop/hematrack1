@@ -44,6 +44,13 @@ class HemangiomaRepository {
     await _saveAreas();
   }
 
+  Future<void> updateArea(HemangiomaArea updated) async {
+    final idx = _areas.indexWhere((a) => a.id == updated.id);
+    if (idx == -1) return;
+    _areas[idx] = updated;
+    await _saveAreas();
+  }
+
   Future<void> updateAreaBaseline(String areaId, String photoPath) async {
     final idx = _areas.indexWhere((a) => a.id == areaId);
     if (idx == -1) return;

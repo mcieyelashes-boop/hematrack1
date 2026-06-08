@@ -26,4 +26,15 @@ class Child {
       createdAt: DateTime.parse(json['createdAt']),
     );
   }
+
+  /// Usia dalam format "X bulan" atau "X tahun Y bulan".
+  String get ageString {
+    final now = DateTime.now();
+    int months =
+        (now.year - birthDate.year) * 12 + now.month - birthDate.month;
+    if (now.day < birthDate.day) months--;
+    if (months < 1) return 'Kurang dari 1 bulan';
+    if (months < 12) return '$months bulan';
+    return '${months ~/ 12} tahun ${months % 12} bulan';
+  }
 }
