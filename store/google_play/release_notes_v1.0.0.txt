@@ -1,0 +1,11 @@
+Rilis perdana HemaTrack v1.0.0
+
+• Profil anak dengan monitoring multi-area hemangioma
+• Foto baseline dengan panduan posisi
+• Follow-up foto dengan ghost overlay transparan
+• Grafik tren ukuran relatif mingguan
+• Perbandingan baseline vs follow-up berdampingan
+• Penandaan area manual dengan polygon interaktif
+• Laporan PDF lengkap dengan foto
+• Pengingat mingguan per anak
+• Semua data tersimpan lokal — privasi terjaga

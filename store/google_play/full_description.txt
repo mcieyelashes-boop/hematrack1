@@ -1,0 +1,49 @@
+HemaTrack — Monitoring Visual Hemangioma Anak
+
+Hemangioma adalah pertumbuhan pembuluh darah yang umum pada bayi dan anak. Memantau perkembangannya secara visual sangat penting untuk mengetahui apakah kondisi membaik, stabil, atau perlu perhatian dokter.
+
+HemaTrack membantu orang tua dan tenaga medis mendokumentasikan perubahan hemangioma secara terstruktur dan konsisten.
+
+━━━ FITUR UTAMA ━━━
+
+📸 Foto Baseline & Follow-up
+Ambil foto hemangioma dengan panduan overlay transparan dari foto baseline sebelumnya — memastikan posisi dan jarak kamera konsisten setiap minggu.
+
+🔄 Ghost Overlay
+Saat mengambil foto follow-up, tampilkan foto baseline sebagai overlay transparan yang bisa diatur ketebalannya untuk membantu posisi yang tepat.
+
+📊 Grafik Tren Mingguan
+Visualisasi perubahan ukuran relatif hemangioma dari waktu ke waktu dalam grafik yang mudah dibaca.
+
+📐 Penandaan Area Manual
+Tandai area hemangioma langsung pada foto dengan polygon interaktif untuk estimasi luas area.
+
+📄 Laporan PDF Lengkap
+Generate laporan monitoring dengan foto baseline, semua foto follow-up, tabel tren ukuran, dan disclaimer medis — siap dibawa ke konsultasi dokter.
+
+🔔 Pengingat Mingguan
+Aktifkan notifikasi pengingat agar tidak melewatkan jadwal foto follow-up mingguan.
+
+🗂️ Multi-anak, Multi-area
+Kelola profil untuk beberapa anak sekaligus. Setiap anak bisa memiliki beberapa area hemangioma yang dipantau secara terpisah.
+
+🔒 Privasi Terjaga
+Semua data tersimpan hanya di perangkat Anda. Tidak ada data yang dikirim ke server, tidak ada akun yang diperlukan.
+
+━━━ UNTUK SIAPA? ━━━
+
+• Orang tua dengan anak yang memiliki hemangioma
+• Bidan dan perawat yang memantau pasien bayi
+• Dokter yang ingin dokumentasi visual dari orang tua pasien
+
+━━━ DISCLAIMER MEDIS ━━━
+
+HemaTrack adalah alat bantu dokumentasi visual, BUKAN alat diagnostik medis. Aplikasi ini tidak memberikan saran medis atau diagnosis. Selalu konsultasikan kondisi anak dengan dokter spesialis anak atau dermatologis.
+
+━━━ PRIVASI ━━━
+
+HemaTrack beroperasi sepenuhnya offline. Semua foto dan data tersimpan lokal di perangkat Anda. Kami tidak mengumpulkan, menyimpan, atau mengirimkan data apapun.
+
+Izin yang diperlukan:
+• Kamera: Untuk mengambil foto hemangioma
+• Notifikasi: Untuk pengingat follow-up mingguan (opsional)

@@ -1,0 +1,35 @@
+HemaTrack — Monitoring Visual Hemangioma Anak
+
+Pantau perkembangan hemangioma anak Anda dengan cara yang terstruktur, konsisten, dan mudah dibagikan ke dokter.
+
+FITUR UNGGULAN
+
+Foto Terstruktur dengan Ghost Overlay
+Ambil foto follow-up dengan overlay transparan dari foto baseline sebelumnya — pastikan posisi kamera selalu konsisten setiap minggu.
+
+Grafik Tren Visual
+Lihat grafik perubahan ukuran relatif hemangioma dari minggu ke minggu dalam tampilan yang mudah dipahami.
+
+Laporan PDF Profesional
+Generate laporan lengkap dengan semua foto dan data tren — siap dibawa ke konsultasi dokter atau disimpan sebagai arsip.
+
+Penandaan Area Interaktif
+Tandai area hemangioma langsung pada foto dengan polygon untuk estimasi luas yang lebih akurat.
+
+Pengingat Mingguan
+Jangan lewatkan jadwal foto follow-up dengan notifikasi mingguan yang bisa diatur per anak.
+
+Privasi Terjaga
+Semua data tersimpan lokal di iPhone Anda. Tidak ada akun, tidak ada cloud, tidak ada data yang dikirim ke server.
+
+---
+
+DISCLAIMER MEDIS
+
+HemaTrack adalah alat bantu dokumentasi visual untuk orang tua dan tenaga medis. Aplikasi ini tidak memberikan diagnosis atau saran medis. Selalu konsultasikan kondisi anak dengan dokter spesialis.
+
+---
+
+PRIVASI
+
+Aplikasi ini beroperasi sepenuhnya offline. Lihat Kebijakan Privasi lengkap di dalam aplikasi (menu ⋮ > Kebijakan Privasi).
