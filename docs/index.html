@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HemaTrack — Monitoring Hemangioma Anak</title>
+  <meta name="description" content="Aplikasi monitoring visual hemangioma anak dengan foto berkala, ghost overlay, grafik tren, dan laporan PDF.">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #fff;
+      color: #222;
+    }
+    header {
+      background: linear-gradient(135deg, #EC407A 0%, #C2185B 100%);
+      color: white;
+      padding: 60px 24px 48px;
+      text-align: center;
+    }
+    header .icon { font-size: 56px; margin-bottom: 12px; }
+    header h1 { font-size: 36px; margin-bottom: 8px; }
+    header p { font-size: 18px; opacity: 0.88; max-width: 480px; margin: 0 auto; }
+    main { max-width: 800px; margin: 0 auto; padding: 48px 24px 80px; }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin: 40px 0;
+    }
+    .feature {
+      background: #FFF0F5;
+      border-radius: 14px;
+      padding: 24px;
+      border: 1px solid #FCE4EC;
+    }
+    .feature .icon { font-size: 28px; margin-bottom: 10px; }
+    .feature h3 { font-size: 15px; margin-bottom: 6px; }
+    .feature p { font-size: 13px; color: #666; line-height: 1.5; }
+    .disclaimer {
+      background: #FFF8E1;
+      border: 1px solid #FFE082;
+      border-radius: 10px;
+      padding: 20px;
+      font-size: 14px;
+      color: #555;
+      margin: 32px 0;
+    }
+    .links { text-align: center; margin-top: 40px; }
+    .links a {
+      display: inline-block;
+      margin: 8px;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .links .primary {
+      background: #EC407A;
+      color: white;
+    }
+    .links .secondary {
+      border: 2px solid #EC407A;
+      color: #EC407A;
+    }
+    footer {
+      text-align: center;
+      color: #999;
+      font-size: 13px;
+      padding: 24px;
+      border-top: 1px solid #eee;
+    }
+    footer a { color: #EC407A; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="icon">❤️</div>
+    <h1>HemaTrack</h1>
+    <p>Monitoring visual hemangioma anak dengan mudah, terstruktur, dan akurat</p>
+  </header>
+
+  <main>
+    <div class="features">
+      <div class="feature">
+        <div class="icon">📸</div>
+        <h3>Ghost Overlay</h3>
+        <p>Foto follow-up dengan overlay transparan dari baseline — posisi selalu konsisten</p>
+      </div>
+      <div class="feature">
+        <div class="icon">📊</div>
+        <h3>Grafik Tren</h3>
+        <p>Visualisasi perubahan ukuran relatif hemangioma dari minggu ke minggu</p>
+      </div>
+      <div class="feature">
+        <div class="icon">📄</div>
+        <h3>Laporan PDF</h3>
+        <p>Export laporan lengkap dengan foto untuk konsultasi dokter</p>
+      </div>
+      <div class="feature">
+        <div class="icon">📐</div>
+        <h3>Marking Area</h3>
+        <p>Tandai area hemangioma dengan polygon interaktif langsung di foto</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🔔</div>
+        <h3>Pengingat Mingguan</h3>
+        <p>Notifikasi pengingat foto follow-up per anak</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🔒</div>
+        <h3>100% Offline</h3>
+        <p>Semua data tersimpan lokal — tidak ada akun, tidak ada cloud</p>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      ⚕️ <strong>Disclaimer Medis:</strong> HemaTrack adalah alat bantu dokumentasi visual, bukan alat diagnostik medis.
+      Selalu konsultasikan kondisi anak dengan dokter spesialis.
+    </div>
+
+    <div class="links">
+      <a class="secondary" href="privacy-policy.html">Kebijakan Privasi</a>
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2025 HemaTrack &nbsp;·&nbsp;
+    <a href="mailto:hematrack.app@gmail.com">hematrack.app@gmail.com</a> &nbsp;·&nbsp;
+    <a href="privacy-policy.html">Kebijakan Privasi</a>
+  </footer>
+</body>
+</html>
