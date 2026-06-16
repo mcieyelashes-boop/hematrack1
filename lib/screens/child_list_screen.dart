@@ -6,6 +6,7 @@ import '../services/hemangioma_repository.dart';
 import 'child_detail_screen.dart';
 import 'child_profile_form_screen.dart';
 import 'onboarding_disclaimer_screen.dart';
+import 'privacy_policy_screen.dart';
 
 class ChildListScreen extends StatefulWidget {
   const ChildListScreen({super.key});
@@ -41,13 +42,37 @@ class _ChildListScreenState extends State<ChildListScreen> {
       appBar: AppBar(
         title: const Text('HemaTrack'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            tooltip: 'Disclaimer Medis',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const OnboardingDisclaimerScreen()),
-            ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (val) {
+              if (val == 'disclaimer') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const OnboardingDisclaimerScreen()),
+                );
+              } else if (val == 'privacy') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const PrivacyPolicyScreen()),
+                );
+              }
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                  value: 'disclaimer',
+                  child: ListTile(
+                      leading: Icon(Icons.health_and_safety_outlined),
+                      title: Text('Disclaimer Medis'),
+                      contentPadding: EdgeInsets.zero)),
+              PopupMenuItem(
+                  value: 'privacy',
+                  child: ListTile(
+                      leading: Icon(Icons.privacy_tip_outlined),
+                      title: Text('Kebijakan Privasi'),
+                      contentPadding: EdgeInsets.zero)),
+            ],
           ),
         ],
       ),

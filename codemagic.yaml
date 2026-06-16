@@ -7,6 +7,8 @@ workflows:
     scripts:
       - flutter create .
       - flutter pub get
+      - dart run flutter_launcher_icons
+      - dart run flutter_native_splash:create
       - |
         python3 - <<'PY'
         from pathlib import Path
@@ -71,6 +73,8 @@ workflows:
     scripts:
       - flutter create .
       - flutter pub get
+      - dart run flutter_launcher_icons
+      - dart run flutter_native_splash:create
       - |
         python3 - <<'PY'
         import os, base64
@@ -211,6 +215,8 @@ if (kpFile.exists()) { kpFile.reader().use { keystoreProps.load(it) } }
     scripts:
       - flutter create .
       - flutter pub get
+      - dart run flutter_launcher_icons
+      - dart run flutter_native_splash:create
       - |
         python3 - <<'PY'
         from pathlib import Path
