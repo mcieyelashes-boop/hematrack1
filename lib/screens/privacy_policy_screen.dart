@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
@@ -22,7 +21,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Terakhir diperbarui: ${DateFormat('dd MMMM yyyy', 'id').format(DateTime(2025, 6, 1))}',
+              'Terakhir diperbarui: 1 Juni 2025',
               style: const TextStyle(color: Colors.grey, fontSize: 13),
             ),
             const SizedBox(height: 20),
