@@ -1,0 +1,45 @@
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+*.g.dart
+*.freezed.dart
+
+# Generated platform folders (flutter create . di Codemagic)
+android/
+ios/
+linux/
+macos/
+web/
+windows/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Android signing — JANGAN commit keystore ke git!
+keystore.p12
+*.jks
+*.keystore
+android/key.properties
+
+# Env / secrets
+.env
+.env.*
+
+# Test coverage
+coverage/
+
+# Logs
+*.log
