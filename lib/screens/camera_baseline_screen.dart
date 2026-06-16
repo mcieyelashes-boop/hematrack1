@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../services/app_storage.dart';
 import '../services/camera_capture_service.dart';
 import '../services/hemangioma_repository.dart';
+import 'manual_marking_screen.dart';
 
 class CameraBaselineScreen extends StatefulWidget {
   final String areaId;
@@ -55,6 +56,42 @@ class _CameraBaselineScreenState extends State<CameraBaselineScreen> {
           await AppStorage.instance.savePhoto(path, 'baseline_${widget.areaId}');
       await HemangiomaRepository.instance
           .updateAreaBaseline(widget.areaId, saved);
+
+      if (!mounted) return;
+
+      // Tawarkan manual marking setelah baseline disimpan
+      final mark = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Tandai Area Hemangioma?'),
+          content: const Text(
+              'Apakah Anda ingin menandai area hemangioma pada foto ini '
+              'untuk pengukuran yang lebih akurat?\n\n'
+              '(Opsional — bisa dilewati)'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Lewati')),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Tandai'),
+            ),
+          ],
+        ),
+      );
+
+      if (mark == true && mounted) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ManualMarkingScreen(
+              photoPath: saved,
+              title: 'Tandai Area Hemangioma',
+            ),
+          ),
+        );
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Baseline tersimpan')),

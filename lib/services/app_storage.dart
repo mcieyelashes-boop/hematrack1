@@ -36,4 +36,30 @@ class AppStorage {
     await File(sourcePath).copy(dest.path);
     return dest.path;
   }
+
+  // ── Simple key-value prefs (stored as single JSON file) ──────────────────
+  final Map<String, dynamic> _prefs = {};
+  bool _prefsLoaded = false;
+
+  Future<void> _loadPrefs() async {
+    if (_prefsLoaded) return;
+    final raw = await readJson('_prefs');
+    if (raw is Map) _prefs.addAll(Map<String, dynamic>.from(raw));
+    _prefsLoaded = true;
+  }
+
+  Future<void> _savePrefs() async {
+    await writeJson('_prefs', _prefs);
+  }
+
+  Future<bool> getBool(String key, {bool defaultValue = false}) async {
+    await _loadPrefs();
+    return _prefs[key] as bool? ?? defaultValue;
+  }
+
+  Future<void> setBool(String key, bool value) async {
+    await _loadPrefs();
+    _prefs[key] = value;
+    await _savePrefs();
+  }
 }
