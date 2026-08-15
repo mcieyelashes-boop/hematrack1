@@ -27,7 +27,7 @@ export default async function DetailAreaPage({
 
   const { data: photos } = await supabase
     .from("hematrack_photos")
-    .select("id, kind, photo_path, size_mm, taken_at, notes")
+    .select("id, kind, photo_path, width_mm, height_mm, color, taken_at, notes")
     .eq("area_id", areaId)
     .order("taken_at", { ascending: true });
 
@@ -47,8 +47,18 @@ export default async function DetailAreaPage({
   const latestFollowup = followups[followups.length - 1];
 
   const trendData = timeline
-    .filter((p) => p.size_mm !== null)
-    .map((p) => ({ taken_at: p.taken_at, size_mm: p.size_mm as number }));
+    .filter((p) => p.width_mm !== null && p.height_mm !== null)
+    .map((p) => ({
+      taken_at: p.taken_at,
+      area_mm2: Math.round((p.width_mm as number) * (p.height_mm as number) * 10) / 10,
+    }));
+
+  function formatUkuran(p: { width_mm: number | null; height_mm: number | null }): string | null {
+    if (p.width_mm !== null && p.height_mm !== null) return `${p.width_mm} × ${p.height_mm} mm`;
+    if (p.width_mm !== null) return `Lebar ${p.width_mm} mm`;
+    if (p.height_mm !== null) return `Tinggi ${p.height_mm} mm`;
+    return null;
+  }
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -78,6 +88,12 @@ export default async function DetailAreaPage({
                   unoptimized
                 />
               )}
+              {formatUkuran(baseline) && (
+                <p className="mt-2 text-center text-xs text-stone-600">{formatUkuran(baseline)}</p>
+              )}
+              {baseline.color && (
+                <p className="text-center text-xs text-stone-600">Warna: {baseline.color}</p>
+              )}
             </div>
             <div>
               <p className="mb-2 text-center text-xs font-medium text-stone-500">
@@ -92,6 +108,12 @@ export default async function DetailAreaPage({
                   className="aspect-square w-full rounded-xl object-cover"
                   unoptimized
                 />
+              )}
+              {formatUkuran(latestFollowup) && (
+                <p className="mt-2 text-center text-xs text-stone-600">{formatUkuran(latestFollowup)}</p>
+              )}
+              {latestFollowup.color && (
+                <p className="text-center text-xs text-stone-600">Warna: {latestFollowup.color}</p>
               )}
             </div>
           </div>
@@ -124,9 +146,10 @@ export default async function DetailAreaPage({
                   <p className="font-medium text-stone-900">
                     {p.kind === "baseline" ? "Baseline" : "Follow-up"} · {p.taken_at}
                   </p>
-                  {p.size_mm !== null && (
-                    <p className="text-sm text-stone-600">{p.size_mm} mm</p>
+                  {formatUkuran(p) && (
+                    <p className="text-sm text-stone-600">{formatUkuran(p)}</p>
                   )}
+                  {p.color && <p className="text-sm text-stone-600">Warna: {p.color}</p>}
                   {p.notes && <p className="truncate text-sm text-stone-500">{p.notes}</p>}
                 </div>
               </li>

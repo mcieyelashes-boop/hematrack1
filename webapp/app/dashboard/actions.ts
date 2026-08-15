@@ -56,7 +56,9 @@ export async function addPhoto(
   formData: FormData
 ): Promise<{ error: string } | void> {
   const kind = String(formData.get("kind") ?? "followup");
-  const sizeRaw = String(formData.get("size_mm") ?? "").trim();
+  const widthRaw = String(formData.get("width_mm") ?? "").trim();
+  const heightRaw = String(formData.get("height_mm") ?? "").trim();
+  const color = String(formData.get("color") ?? "").trim();
   const takenAt = String(formData.get("taken_at") ?? "").trim();
   const notes = String(formData.get("notes") ?? "").trim();
   const file = formData.get("photo") as File | null;
@@ -83,7 +85,9 @@ export async function addPhoto(
     user_id: user.id,
     kind,
     photo_path: path,
-    size_mm: sizeRaw ? Number(sizeRaw) : null,
+    width_mm: widthRaw ? Number(widthRaw) : null,
+    height_mm: heightRaw ? Number(heightRaw) : null,
+    color: color || null,
     taken_at: takenAt || new Date().toISOString().slice(0, 10),
     notes: notes || null,
   });

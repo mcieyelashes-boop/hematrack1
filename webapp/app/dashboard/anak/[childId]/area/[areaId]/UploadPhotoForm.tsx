@@ -54,16 +54,35 @@ export default function UploadPhotoForm({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-stone-700">Ukuran (mm, opsional)</label>
+          <label className="block text-sm font-medium text-stone-700">Lebar (mm, opsional)</label>
           <input
             type="number"
             step="0.1"
             min="0"
-            name="size_mm"
+            name="width_mm"
             className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2.5 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
           />
         </div>
         <div>
+          <label className="block text-sm font-medium text-stone-700">Tinggi (mm, opsional)</label>
+          <input
+            type="number"
+            step="0.1"
+            min="0"
+            name="height_mm"
+            className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2.5 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
+          />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-stone-700">Warna (opsional)</label>
+          <input
+            type="text"
+            name="color"
+            placeholder="mis. merah terang, merah tua, keunguan"
+            className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2.5 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
+          />
+        </div>
+        <div className="sm:col-span-2">
           <label className="block text-sm font-medium text-stone-700">Foto</label>
           <input
             type="file"
