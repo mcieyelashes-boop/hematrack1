@@ -23,38 +23,38 @@ export async function measurePhotoWithCoin(
   imageBase64: string,
   mimeType: string
 ): Promise<PhotoMeasurement | { error: string }> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return { error: "Fitur pengukuran AI belum dikonfigurasi." };
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 500,
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "image", source: { type: "base64", media_type: mimeType, data: imageBase64 } },
-              { type: "text", text: COIN_PROMPT },
-            ],
-          },
-        ],
-      }),
-    });
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                { inline_data: { mime_type: mimeType, data: imageBase64 } },
+                { text: COIN_PROMPT },
+              ],
+            },
+          ],
+          generationConfig: { responseMimeType: "application/json" },
+        }),
+      }
+    );
 
     if (!response.ok) {
       return { error: `Gagal memanggil AI pengukuran (${response.status}).` };
     }
 
     const data = await response.json();
-    const text: string = data?.content?.[0]?.text ?? "";
+    const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return { error: "AI tidak mengembalikan hasil yang bisa dibaca." };
 
