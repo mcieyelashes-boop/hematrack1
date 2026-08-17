@@ -61,6 +61,18 @@ export default function UploadPhotoForm({
         </span>
       </label>
 
+      {useAi && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+          <p className="font-semibold">Supaya hasil ukur antar foto konsisten:</p>
+          <ul className="mt-1 list-disc space-y-0.5 pl-4">
+            <li>Foto <strong>tegak lurus dari atas</strong> (kamera sejajar 90° dengan kulit), jangan miring.</li>
+            <li>Koin diletakkan <strong>rata &amp; menempel</strong> pada bidang kulit yang sama dengan area yang diukur.</li>
+            <li>Jarak &amp; pencahayaan sebisa mungkin <strong>sama setiap kali</strong> foto — pastikan tidak buram/blur.</li>
+            <li>Ukuran dari AI adalah estimasi visual, bisa ada sedikit variasi antar foto — lihat sebagai tren, bukan angka mutlak per hari.</li>
+          </ul>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-stone-700">Jenis foto</label>
