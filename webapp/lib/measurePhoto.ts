@@ -23,38 +23,36 @@ export async function measurePhotoWithCoin(
   imageBase64: string,
   mimeType: string
 ): Promise<PhotoMeasurement | { error: string }> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) return { error: "Fitur pengukuran AI belum dikonfigurasi." };
 
   try {
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
-      {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { inline_data: { mime_type: mimeType, data: imageBase64 } },
-                { text: COIN_PROMPT },
-              ],
-            },
-          ],
-          generationConfig: { responseMimeType: "application/json" },
-        }),
-      }
-    );
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "minimax/minimax-m3:free",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: COIN_PROMPT },
+              { type: "image_url", image_url: { url: `data:${mimeType};base64,${imageBase64}` } },
+            ],
+          },
+        ],
+      }),
+    });
 
     if (!response.ok) {
       return { error: `Gagal memanggil AI pengukuran (${response.status}).` };
     }
 
     const data = await response.json();
-    const text: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    const text: string = data?.choices?.[0]?.message?.content ?? "";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return { error: "AI tidak mengembalikan hasil yang bisa dibaca." };
 
