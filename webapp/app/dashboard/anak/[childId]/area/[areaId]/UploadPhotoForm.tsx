@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { addPhoto } from "../../../../actions";
+import { compressImage } from "@/lib/compressImage";
 
 export default function UploadPhotoForm({
   areaId,
@@ -24,6 +25,10 @@ export default function UploadPhotoForm({
     setWarning(null);
     setSuccess(false);
     startTransition(async () => {
+      const photo = formData.get("photo");
+      if (photo instanceof File && photo.size > 0) {
+        formData.set("photo", await compressImage(photo));
+      }
       const result = await addPhoto(areaId, formData);
       if (result?.error) {
         setError(result.error);

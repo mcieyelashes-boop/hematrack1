@@ -85,7 +85,6 @@ export default async function DetailAreaPage({
                   width={300}
                   height={300}
                   className="aspect-square w-full rounded-xl object-cover"
-                  unoptimized
                 />
               )}
               {formatUkuran(baseline) && (
@@ -106,7 +105,6 @@ export default async function DetailAreaPage({
                   width={300}
                   height={300}
                   className="aspect-square w-full rounded-xl object-cover"
-                  unoptimized
                 />
               )}
               {formatUkuran(latestFollowup) && (
@@ -139,7 +137,6 @@ export default async function DetailAreaPage({
                     width={80}
                     height={80}
                     className="h-20 w-20 shrink-0 rounded-lg object-cover"
-                    unoptimized
                   />
                 )}
                 <div className="min-w-0">
