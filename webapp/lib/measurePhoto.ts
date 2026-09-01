@@ -23,18 +23,18 @@ export async function measurePhotoWithCoin(
   imageBase64: string,
   mimeType: string
 ): Promise<PhotoMeasurement | { error: string }> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) return { error: "Fitur pengukuran AI belum dikonfigurasi." };
 
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "content-type": "application/json",
         authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "minimax/minimax-m3:free",
+        model: "deepseek-v4-flash-vision-exp",
         messages: [
           {
             role: "user",
