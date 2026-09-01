@@ -41,6 +41,7 @@ export async function measurePhotoWithCoin(
       },
       body: JSON.stringify({
         model: "deepseek-v4-flash-vision-exp",
+        temperature: 0,
         messages: [
           {
             role: "user",
