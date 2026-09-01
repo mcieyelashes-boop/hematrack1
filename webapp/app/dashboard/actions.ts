@@ -98,6 +98,23 @@ export async function addPhoto(
       if (result.width_mm !== null) widthMm = result.width_mm;
       if (result.height_mm !== null) heightMm = result.height_mm;
       if (result.color) colorValue = result.color;
+
+      const qualityIssues: string[] = [];
+      if (result.coinCircularity !== null && result.coinCircularity < 0.85) {
+        qualityIssues.push(
+          "foto tampak kurang tegak lurus (koin terlihat oval) — ambil ulang dari tepat di atas area agar lebih akurat"
+        );
+      }
+      if (result.coinRelativeSize !== null) {
+        if (result.coinRelativeSize < 0.03) {
+          qualityIssues.push("koin terlalu kecil/jauh di foto — dekatkan kamera saat foto berikutnya");
+        } else if (result.coinRelativeSize > 0.5) {
+          qualityIssues.push("koin terlalu besar/dekat di foto — mundurkan kamera sedikit saat foto berikutnya");
+        }
+      }
+      if (qualityIssues.length > 0) {
+        warning = `${qualityIssues.join("; ")}.`;
+      }
     }
   }
 
